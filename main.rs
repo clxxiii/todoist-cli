@@ -1,9 +1,12 @@
-mod get;
+use reqwest::{self, IntoUrl};
 use std::env::Args;
+
+use crate::BASE_URL;
 
 enum TaskType {
     Get,
     Create,
+    List,
     Complete,
 }
 
@@ -14,16 +17,17 @@ struct Command<'a> {
 }
 
 impl Command<'_> {
-    async fn run(&self) {
+    fn run(&self) {
         match self.command {
-            TaskType::Get => get::get().await,
+            TaskType::Get => println!("task get!"),
             TaskType::Create => println!("task create!"),
+            TaskType::List => println!("task list!"),
             TaskType::Complete => println!("task complete!"),
         }
     }
 }
 
-const COMMANDS: [Command; 3] = [
+const COMMANDS: [Command; 4] = [
     Command {
         command: TaskType::Get,
         name: "get",
@@ -35,13 +39,18 @@ const COMMANDS: [Command; 3] = [
         description: "Creates a new task from a given string",
     },
     Command {
+        command: TaskType::List,
+        name: "list",
+        description: "Generate a list of tasks based on a filter",
+    },
+    Command {
         command: TaskType::Complete,
         name: "project",
         description: "Complete a task based on an ID",
     },
 ];
 
-pub async fn run(input: &mut Args, process_name: String) -> () {
+pub fn run(input: &mut Args, process_name: String) -> () {
     let text: String = match input.nth(0) {
         Some(thing) => thing,
         None => std::process::exit(1),
@@ -55,8 +64,7 @@ pub async fn run(input: &mut Args, process_name: String) -> () {
             std::process::exit(1)
         }
     };
-
-    command.run().await
+    command.run();
 }
 
 fn print_help_message() {
@@ -64,4 +72,11 @@ fn print_help_message() {
     COMMANDS
         .iter()
         .for_each(|x| println!("\t{}\t{}", x.name, x.description))
+}
+
+fn get(filter: String) {
+    let token_path = &crate::token_path();
+    #[IntoUrl]
+    let url = String::from(BASE_URL).push_str("tasks");
+    reqwest::get(url);
 }

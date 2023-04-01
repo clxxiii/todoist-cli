@@ -1,4 +1,5 @@
 use std::env::Args;
+mod login;
 mod task;
 
 enum CommandType {
@@ -16,11 +17,11 @@ struct Command<'a> {
 }
 
 impl Command<'_> {
-    fn run(&self, input: &mut Args, process_name: String) {
+    async fn run(&self, input: &mut Args, process_name: String) {
         match self.command {
-            CommandType::Task => task::run(input, process_name),
+            CommandType::Task => task::run(input, process_name).await,
             CommandType::Config => println!("config!"),
-            CommandType::Login => println!("login!"),
+            CommandType::Login => login::run(input, process_name),
             CommandType::Project => println!("project!"),
             CommandType::Help => print_help_message(),
         }
@@ -55,7 +56,7 @@ static COMMANDS: [Command; 5] = [
     },
 ];
 
-pub fn handle(input: &mut Args, process_name: String) -> () {
+pub async fn handle(input: &mut Args, process_name: String) -> () {
     let text: String = match input.nth(0) {
         Some(thing) => thing,
         None => {
@@ -72,7 +73,7 @@ pub fn handle(input: &mut Args, process_name: String) -> () {
             std::process::exit(1)
         }
     };
-    command.run(input, process_name);
+    command.run(input, process_name).await;
 }
 
 fn print_help_message() {
